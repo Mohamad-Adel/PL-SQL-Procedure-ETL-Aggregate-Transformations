@@ -1,0 +1,50 @@
+
+- Creating Source Table:
+create table daily_status_inputs (table_name varchar(100), column_name varchar(100), function_name
+varchar(100),frequency varchar(5));
+
+- Inserting to source:
+INSERT INTO "HR"."DAILY_STATUS_INPUTS" (TABLE_NAME, COLUMN_NAME, FUNCTION_NAME,
+FREQUENCY) VALUES ('Countries', 'Country_id', 'count', 'DAY')
+INSERT INTO "HR"."DAILY_STATUS_INPUTS" (TABLE_NAME, COLUMN_NAME, FUNCTION_NAME,
+FREQUENCY) VALUES ('Employees', 'Hire_date', 'max', 'Month')
+INSERT INTO "HR"."DAILY_STATUS_INPUTS" (TABLE_NAME, COLUMN_NAME, FUNCTION_NAME,
+FREQUENCY) VALUES ('Employees', 'Salary', 'avg', 'Day')
+INSERT INTO "HR"."DAILY_STATUS_INPUTS" (TABLE_NAME, COLUMN_NAME, FUNCTION_NAME,
+FREQUENCY) VALUES ('Jobs', 'Max_salary', 'avg', 'Day')
+INSERT INTO "HR"."DAILY_STATUS_INPUTS" (TABLE_NAME, COLUMN_NAME, FUNCTION_NAME,
+FREQUENCY) VALUES ('Jobs', 'Min_salary', 'avg', 'Day')
+INSERT INTO "HR"."DAILY_STATUS_INPUTS" (TABLE_NAME, COLUMN_NAME, FUNCTION_NAME,
+FREQUENCY) VALUES ('Locations', 'city', 'count', 'Month')
+
+
+- Creating Target Table:
+create table DAILY_STATUS_UPDATE(table_name varchar(100),column_name varchar(100),Caluculation
+varchar(100),value_ varchar(100),Date_ date,frequency varchar(10));
+
+
+- Creating Procedure:
+create or replace PROCEDURE INSERT_TO_DAILY_STATUS_UPDATE
+is
+VALUE_1 varchar(100);
+DATE_1 DATE ;
+DATE_TEST DATE;
+FREQUENCY VARCHAR(100);
+cursor inputs is
+select * from daily_status_inputs;
+begin
+SELECT MAX (DATE_) INTO DATE_TEST FROM DAILY_STATUS_UPDATE;
+for i in inputs
+loop
+FREQUENCY:=UPPER(i.FREQUENCY);
+EXECUTE IMMEDIATE 'select SUBSTR( to_char('||i.function_name||'('||i.column_name||')),1,20) from
+'||i.table_name into VALUE_1;
+IF DATE_TEST IS NULL AND FREQUENCY='MONTH' THEN DATE_1:=ADD_MONTHS(SYSDATE,-1);
+ELSIF DATE_TEST IS NULL AND FREQUENCY='DAY' THEN DATE_1:=(sysdate-1);
+ELSIF DATE_TEST IS NOT NULL AND FREQUENCY='DAY' THEN DATE_1:=DATE_TEST+1;
+ELSE DATE_1:=ADD_MONTHS(DATE_TEST,1);
+END IF;
+insert into DAILY_STATUS_UPDATE
+VALUES(i.table_name,i.column_name,i.function_name,VALUE_1,DATE_1,i.FREQUENCY);
+end loop;
+end;
